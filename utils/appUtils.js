@@ -12,15 +12,18 @@ function interfaceStr(url, headers, urlUserId, urlToken) {
     content: null,
     contentType: 'text/plain;charset=UTF-8'
   }
-  let fileName = process.cwd() + "/interface.txt"
-  switch (url) {
+  const isZbpro = url.startsWith("/zbpro")
+  const normalizedUrl = isZbpro ? url.substring("/zbpro".length) || "/" : url
+  const filePrefix = isZbpro ? "/zbpro-" : "/"
+  let fileName = process.cwd() + `${filePrefix}interface.txt`
+  switch (normalizedUrl) {
     case "/playback.xml":
-      fileName = process.cwd() + "/playback.xml"
+      fileName = process.cwd() + `${filePrefix}playback.xml`
       result.contentType = "text/xml;charset=UTF-8"
       break;
 
     case "/txt":
-      fileName = process.cwd() + "/interfaceTXT.txt"
+      fileName = process.cwd() + `${filePrefix}interfaceTXT.txt`
       break;
 
     case "/m3u":
@@ -37,7 +40,7 @@ function interfaceStr(url, headers, urlUserId, urlToken) {
     console.log(error)
     return result
   }
-  if (url == "/playback.xml") {
+  if (normalizedUrl == "/playback.xml") {
     return result
   }
 

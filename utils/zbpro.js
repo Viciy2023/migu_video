@@ -1,6 +1,6 @@
 import { printGreen, printMagenta, printRed } from "./colorOut.js"
 import crypto from "node:crypto"
-import { writeFileSync } from "node:fs"
+import { existsSync, writeFileSync } from "node:fs"
 import { gunzipSync } from "node:zlib"
 import { debug } from "../config.js"
 import { domainWhiteList, repoLinkUpdateTimestamp } from "./datas.js"
@@ -37,7 +37,7 @@ function isInWhiteList(whiteList, item) {
   return false
 }
 
-async function getAllURL(channelImage) {
+async function getAllURL(channelImage, filePrefix = "") {
   const channelsURLM3U = []
   const channelsURLTXT = []
   const domains = {}
@@ -63,7 +63,9 @@ async function getAllURL(channelImage) {
     // console.log(result)
     // console.log(pro_gz)
     const result = JSON.parse(resultJSON)
-    if (result.timestamp == repoLinkUpdateTimestamp) {
+    const m3uFilePath = `${process.cwd()}/${filePrefix}interface.txt`
+    const txtFilePath = `${process.cwd()}/${filePrefix}interfaceTXT.txt`
+    if (result.timestamp == repoLinkUpdateTimestamp && existsSync(m3uFilePath) && existsSync(txtFilePath)) {
       status = 1
       return 1
     }
@@ -178,10 +180,10 @@ async function getAllURL(channelImage) {
   }
 }
 
-async function updateChannels(channelImage) {
-  const m3uFilePath = `${process.cwd()}/interface.txt`
-  const txtFilePath = `${process.cwd()}/interfaceTXT.txt`
-  const allURL = await getAllURL(channelImage)
+async function updateChannels(channelImage, filePrefix = "") {
+  const m3uFilePath = `${process.cwd()}/${filePrefix}interface.txt`
+  const txtFilePath = `${process.cwd()}/${filePrefix}interfaceTXT.txt`
+  const allURL = await getAllURL(channelImage, filePrefix)
   if (allURL > 0) {
     return allURL
   }

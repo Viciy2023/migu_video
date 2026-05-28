@@ -1,2 +1,14 @@
 node_modules
 package-lock.json
+.env
+**/.env
+/huggingface/.env
+.tmp
+tests
+fnos/merge-onetv-hometv.test.mjs
+fnos/onetv_api_hometv.m3u
+fnos/onetv-hometv-implementation-plan.md
+fnos/onetv-hometv-merge-design.md
+fnos/README.md
+fnos/*id_rsa*
+fnos/192.168.1.20_20260528100728_id_rsa

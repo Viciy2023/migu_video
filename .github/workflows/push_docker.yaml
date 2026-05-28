@@ -1,20 +1,35 @@
-name: push_docker
+name: build-pro-image
+
 on:
-  # push:
-  #   branches:
-  #     - main
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - Dockerfile
+      - app.js
+      - config.js
+      - package.json
+      - fetchURLBy*.js
+      - utils/**
+      - .github/workflows/push_docker.yaml
+
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Login to Docker Hub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -29,4 +44,6 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64/v8,linux/arm/v7,linux/arm/v6,linux/s390x
           push: true
-          tags: develop767/migu_video:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/migu_video:pro
+            ghcr.io/${{ github.repository_owner }}/migu_video:latest

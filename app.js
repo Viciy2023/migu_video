@@ -2,6 +2,7 @@ import http from "node:http"
 import { host, pass, port, programInfoUpdateInterval, token, userId } from "./config.js";
 import { getDateTimeStr } from "./utils/time.js";
 import update from "./utils/updateData.js";
+import updateZbpro from "./utils/updateZbpro.js";
 import { printBlue, printGreen, printMagenta, printRed } from "./utils/colorOut.js";
 import { delay } from "./utils/fetchList.js";
 import { channel, interfaceStr } from "./utils/appUtils.js";
@@ -78,7 +79,7 @@ const server = http.createServer(async (req, res) => {
     return
   }
 
-  const interfaceList = "/,/interface.txt,/m3u,/txt,/playback.xml"
+  const interfaceList = "/,/interface.txt,/m3u,/txt,/playback.xml,/zbpro,/zbpro/interface.txt,/zbpro/m3u,/zbpro/txt,/zbpro/playback.xml"
 
   // 接口
   if (interfaceList.indexOf(url) !== -1) {
@@ -130,6 +131,7 @@ server.listen(port, async () => {
     hours += updateInterval
     try {
       await update(hours)
+      await updateZbpro(hours)
     } catch (error) {
       console.log(error)
       printRed("更新失败")
@@ -141,6 +143,7 @@ server.listen(port, async () => {
   try {
     // 初始化数据
     await update(hours)
+    await updateZbpro(hours)
   } catch (error) {
     console.log(error)
     printRed("更新失败")

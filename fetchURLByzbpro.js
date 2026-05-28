@@ -6,6 +6,7 @@ import { dataList } from "./utils/fetchList.js"
 import updateChannels from "./utils/zbpro.js"
 
 const start = new Date()
+const filePrefix = process.env.mzbproPrefix || ""
 const datas = await dataList()
 const channelImage = {}
 
@@ -21,7 +22,7 @@ printMagenta("开始更新接口文件...")
 let updateResult = 2
 for (let i = 0; i < 3; i++) {
   try {
-    updateResult = await updateChannels(channelImage)
+    updateResult = await updateChannels(channelImage, filePrefix)
     break
   } catch (error) {
     printRed("接口更新出现问题，正在重试...")
@@ -47,7 +48,7 @@ if (!(start.getHours() % 6)) {
   printGreen("数据获取成功！")
 
   try {
-    const playbackFile = `${process.cwd()}/playback.xml.bak`
+    const playbackFile = `${process.cwd()}/${filePrefix}playback.xml.bak`
 
     writeFileSync(playbackFile, `<?xml version="1.0" encoding="UTF-8"?>\n` +
       `<tv generator-info-name="Tak" generator-info-url="https://github.com/develop202/migu_video">\n`)
@@ -68,4 +69,3 @@ if (!(start.getHours() % 6)) {
 }
 
 printGreen(`用时 ${(Date.now() - start.getTime()) / 1000}秒`)
-

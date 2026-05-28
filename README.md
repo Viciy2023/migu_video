@@ -10,7 +10,7 @@ gitee仓库被封...
 
 访问地址(可回看当天内容)
 
-```
+```shell
 https://raw.githubusercontent.com/develop202/migu_video/refs/heads/main/interface.txt
 
 https://develop202.github.io/migu_video/interface.txt
@@ -18,7 +18,7 @@ https://develop202.github.io/migu_video/interface.txt
 
 网络环境差的话可以用这个(不一定稳定,其他加速网站也可以)
 
-```
+```shell
 https://gh-proxy.com/https://raw.githubusercontent.com/develop202/migu_video/refs/heads/main/interface.txt
 ```
 
@@ -68,6 +68,82 @@ cd migu_video
 ```shell
 node app.js
 ```
+
+启动后会同时维护两套接口文件:
+
+| 接口 | 地址 | 说明 |
+| ---- | ---- | ---- |
+| 咪咕动态代理 M3U | <http://ip:port/interface.txt> 或 <http://ip:port/m3u> | 由咪咕官方频道列表生成，播放时访问本服务的频道ID，再实时向咪咕获取真实播放地址并302跳转 |
+| 咪咕动态代理 TXT | <http://ip:port/txt> | 与上面相同，只是 TXT 订阅格式 |
+| 咪咕动态代理回看 | <http://ip:port/playback.xml> | 当前服务生成的回看节目单 |
+| ZBPRO 多源 M3U | <http://ip:port/zbpro/interface.txt> 或 <http://ip:port/zbpro/m3u> | 从第三方 ZBPRO 源解密生成，效果接近 GitHub Pages 上的静态多源 M3U |
+| ZBPRO 多源 TXT | <http://ip:port/zbpro/txt> | ZBPRO 的 TXT 订阅格式 |
+| ZBPRO 回看 | <http://ip:port/zbpro/playback.xml> | ZBPRO 接口配套的回看节目单 |
+
+两套接口的区别:
+
+| 类型 | 数据来源 | URL形态 | 频道数量 | 特点 |
+| ---- | ---- | ---- | ---- | ---- |
+| 咪咕动态代理 | 咪咕官方 TV/体育接口 | 本服务地址 + 频道ID，例如 `/608807420` | 通常较少 | 播放时实时换取咪咕播放地址，链路清晰 |
+| ZBPRO 多源 | `http://pro.fengcaizb.com/channels/pro.gz` 解密结果 | 直接直播 URL，例如 `.m3u8` | 通常较多 | 来源混合，包含咪咕、移动 IPTV、地方台、抖音等源 |
+
+自动更新逻辑:
+
+1. 服务启动时会立即更新一次咪咕动态代理文件和 ZBPRO 多源文件。
+2. 之后按 `mupdateInterval` 定时更新，默认每 6 小时一次。
+3. ZBPRO 源会生成独立文件: `zbpro-interface.txt`、`zbpro-interfaceTXT.txt`、`zbpro-playback.xml`。
+4. 默认接口文件仍是 `interface.txt`、`interfaceTXT.txt`、`playback.xml`，不会被 ZBPRO 覆盖。
+5. 如果设置了 `mpass`，访问 ZBPRO 接口也需要带密码，例如 <http://ip:port/mpass/zbpro/interface.txt>。
+
+### GitHub Actions + GitHub Pages 静态部署 ZBPRO
+
+如果只需要 ZBPRO 多源静态 M3U，可以不运行自己的 Node 服务器，直接让 GitHub Actions 定时生成文件，再用 GitHub Pages 发布。
+
+当前仓库地址:
+
+```text
+https://github.com/Viciy2023/migu_video.git
+```
+
+工作流文件:
+
+```text
+.github/workflows/updateBydszb.yml
+```
+
+工作流会每 6 小时执行一次，也可以在 GitHub 页面手动点击 `Run workflow` 执行。它会生成并提交以下文件:
+
+```text
+zbpro-interface.txt
+zbpro-interfaceTXT.txt
+zbpro-playback.xml
+```
+
+开启 GitHub Pages 后，在仓库页面进入 `Settings` -> `Pages`，选择:
+
+```text
+Source: Deploy from a branch
+Branch: main
+Folder: / (root)
+```
+
+发布后可使用这些地址:
+
+```text
+https://viciy2023.github.io/migu_video/zbpro-interface.txt
+https://viciy2023.github.io/migu_video/zbpro-interfaceTXT.txt
+https://viciy2023.github.io/migu_video/zbpro-playback.xml
+```
+
+也可以使用 GitHub Raw 地址:
+
+```text
+https://raw.githubusercontent.com/Viciy2023/migu_video/refs/heads/main/zbpro-interface.txt
+https://raw.githubusercontent.com/Viciy2023/migu_video/refs/heads/main/zbpro-interfaceTXT.txt
+https://raw.githubusercontent.com/Viciy2023/migu_video/refs/heads/main/zbpro-playback.xml
+```
+
+注意: GitHub Pages 发布的是静态文件，所以没有 `/zbpro/m3u` 这种服务路由；`zbpro-interface.txt` 本身就是 M3U 文件，可以直接作为订阅地址使用。
 
 若需要修改配置，可以使用以下命令
 Mac/Linux:
