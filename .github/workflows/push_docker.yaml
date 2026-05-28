@@ -45,5 +45,5 @@ jobs:
           platforms: linux/amd64,linux/arm64/v8,linux/arm/v7,linux/arm/v6,linux/s390x
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/migu_video:pro
-            ghcr.io/${{ github.repository_owner }}/migu_video:latest
+            ghcr.io/viciy2023/migu_video:pro
+            ghcr.io/viciy2023/migu_video:latest

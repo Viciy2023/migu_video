@@ -3,7 +3,6 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_REMOTE_ZBPRO_URL = "https://viciy2023.github.io/migu_video/zbpro-interface.txt";
 const DEFAULT_OUTPUT = "fnos/onetv_api_hometv.m3u";
 
 const REGION_GROUPS = new Map([
@@ -244,6 +243,27 @@ async function fetchPlaylist(url) {
   return text;
 }
 
+export function resolveRemoteZbproUrl(env = process.env) {
+  if (env.REMOTE_ZBPRO_URL) {
+    return env.REMOTE_ZBPRO_URL;
+  }
+  if (!env.FNOS_MIGU_URL) {
+    return "";
+  }
+  const url = new URL(env.FNOS_MIGU_URL);
+  const parts = url.pathname.split("/").filter(Boolean);
+  const interfaceIndex = parts.lastIndexOf("interface.txt");
+  if (interfaceIndex !== -1) {
+    parts.splice(interfaceIndex, 1, "zbpro", "interface.txt");
+  } else {
+    parts.push("zbpro", "interface.txt");
+  }
+  url.pathname = `/${parts.join("/")}`;
+  url.search = "";
+  url.hash = "";
+  return url.toString();
+}
+
 function atomicWrite(filePath, content) {
   const dir = path.dirname(filePath);
   mkdirSync(dir, { recursive: true });
@@ -366,7 +386,7 @@ export async function uploadToSupabaseStorage(content, env = process.env, fetchI
 
 export async function runCli(env = process.env) {
   const localUrl = env.FNOS_MIGU_URL;
-  const remoteUrl = env.REMOTE_ZBPRO_URL || DEFAULT_REMOTE_ZBPRO_URL;
+  const remoteUrl = resolveRemoteZbproUrl(env);
   const outputPath = env.ONETV_OUTPUT || DEFAULT_OUTPUT;
 
   if (!localUrl) {
