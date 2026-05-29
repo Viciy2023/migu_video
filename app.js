@@ -5,7 +5,9 @@ import update from "./utils/updateData.js";
 import updateZbpro from "./utils/updateZbpro.js";
 import { printBlue, printGreen, printMagenta, printRed } from "./utils/colorOut.js";
 import { delay } from "./utils/fetchList.js";
-import { channel, interfaceStr } from "./utils/appUtils.js";
+import { channel, interfaceStr, normalizeCredentialPath } from "./utils/appUtils.js";
+
+const interfacePaths = new Set(["/", "/interface.txt", "/m3u", "/txt", "/playback.xml", "/zbpro", "/zbpro/interface.txt", "/zbpro/m3u", "/zbpro/txt", "/zbpro/playback.xml"])
 
 // 运行时长
 var hours = 0
@@ -41,20 +43,10 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  let urlToken = ""
-  let urlUserId = ""
-  // 匹配是否存在用户信息
-  if (/\/{1}[^\/\s]{1,}\/{1}[^\/\s]{1,}/.test(url)) {
-    const urlSplit = url.split("/")
-    if (urlSplit.length >= 3) {
-      urlUserId = urlSplit[1]
-      urlToken = urlSplit[2]
-      url = urlSplit.length == 3 ? "/" : "/" + urlSplit[urlSplit.length - 1]
-    }
-  } else {
-    urlUserId = userId
-    urlToken = token
-  }
+  const credentialPath = normalizeCredentialPath(url, userId, token, interfacePaths)
+  url = credentialPath.url
+  const urlUserId = credentialPath.urlUserId
+  const urlToken = credentialPath.urlToken
 
   // printGreen("")
   printMagenta("请求地址：" + url)
@@ -79,10 +71,8 @@ const server = http.createServer(async (req, res) => {
     return
   }
 
-  const interfaceList = "/,/interface.txt,/m3u,/txt,/playback.xml,/zbpro,/zbpro/interface.txt,/zbpro/m3u,/zbpro/txt,/zbpro/playback.xml"
-
   // 接口
-  if (interfaceList.indexOf(url) !== -1) {
+  if (interfacePaths.has(url)) {
     const interfaceObj = interfaceStr(url, headers, urlUserId, urlToken)
     if (interfaceObj.content == null) {
       interfaceObj.content = "获取失败"

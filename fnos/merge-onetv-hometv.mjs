@@ -50,6 +50,12 @@ const REMOTE_BASE_GROUPS = new Set([
   "超清频道",
 ]);
 
+const GROUP_ALIASES = new Map([
+  ["央视", "央视频道"],
+  ["央视台", "央视频道"],
+  ["卫视", "卫视频道"],
+]);
+
 const CORE_REMOTE_KEYWORDS = [
   "douyincdn",
   "miguvideo",
@@ -129,6 +135,9 @@ export function parseM3u(text, source) {
 
 export function normalizeChannelName(name) {
   const normalized = String(name).trim();
+  if (/超清|高清|4K|8K/i.test(normalized)) {
+    return normalized;
+  }
   const cctvMatch = normalized.match(/^CCTV(\d+\+?)/i);
   if (cctvMatch) {
     return `CCTV${cctvMatch[1]}`;
@@ -137,6 +146,10 @@ export function normalizeChannelName(name) {
 }
 
 export function mapGroup(group, name) {
+  if (GROUP_ALIASES.has(group)) {
+    return GROUP_ALIASES.get(group);
+  }
+
   if (REGION_GROUPS.has(group)) {
     return REGION_GROUPS.get(group);
   }
@@ -176,11 +189,13 @@ function normalizeEntry(entry) {
 }
 
 function shouldKeepLocalEntry(entry) {
-  return LOCAL_GROUPS.has(entry.group) || entry.group.startsWith("体育");
+  const group = mapGroup(entry.group, entry.name);
+  return LOCAL_GROUPS.has(group) || group.startsWith("体育");
 }
 
 function shouldKeepRemoteEntry(entry) {
-  return REMOTE_BASE_GROUPS.has(entry.group) || REGION_GROUPS.has(entry.group) || [...REGION_GROUPS.values()].includes(entry.group);
+  const group = mapGroup(entry.group, entry.name);
+  return REMOTE_BASE_GROUPS.has(group) || REGION_GROUPS.has(entry.group) || [...REGION_GROUPS.values()].includes(group);
 }
 
 export function mergePlaylists(localText, remoteText) {

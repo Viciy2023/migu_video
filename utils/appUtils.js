@@ -207,4 +207,23 @@ function channelCache(pid, params) {
   return cache
 }
 
-export { interfaceStr, channel, channelCache }
+function normalizeCredentialPath(url, defaultUserId, defaultToken, interfacePaths = new Set()) {
+  if (interfacePaths.has(url)) {
+    return { url, urlUserId: defaultUserId, urlToken: defaultToken }
+  }
+
+  if (/\/{1}[^\/\s]{1,}\/{1}[^\/\s]{1,}/.test(url)) {
+    const urlSplit = url.split("/")
+    if (urlSplit.length >= 3) {
+      return {
+        url: urlSplit.length == 3 ? "/" : "/" + urlSplit[urlSplit.length - 1],
+        urlUserId: urlSplit[1],
+        urlToken: urlSplit[2],
+      }
+    }
+  }
+
+  return { url, urlUserId: defaultUserId, urlToken: defaultToken }
+}
+
+export { interfaceStr, channel, channelCache, normalizeCredentialPath }
