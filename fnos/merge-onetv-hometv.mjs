@@ -12,6 +12,15 @@ const REGION_GROUPS = new Map([
   ["黑龙江地区", "黑龙江频道"],
   ["江西地区", "江西频道"],
   ["陕西地区", "陕西频道"],
+  ["安徽地区", "安徽频道"],
+  ["吉林地区", "吉林频道"],
+  ["重庆地区", "重庆频道"],
+  ["四川地区", "四川频道"],
+  ["云南地区", "云南频道"],
+  ["福建地区", "福建频道"],
+  ["湖北地区", "湖北频道"],
+  ["新疆地区", "新疆频道"],
+  ["山西地区", "山西频道"],
 ]);
 
 const GROUP_ORDER = [
@@ -25,6 +34,15 @@ const GROUP_ORDER = [
   "黑龙江频道",
   "江西频道",
   "陕西频道",
+  "安徽频道",
+  "吉林频道",
+  "重庆频道",
+  "四川频道",
+  "云南频道",
+  "福建频道",
+  "湖北频道",
+  "新疆频道",
+  "山西频道",
   "其他",
   "体育昨天",
   "体育今天",
@@ -76,6 +94,19 @@ const REGIONAL_REMOTE_KEYWORDS = [
   "snrtv.com",
   "hebyun.com.cn",
   "migucloud.com",
+  "192.168.1.20:1234",
+];
+
+const MIGU_LOGO_BASE_URL = "https://raw.githubusercontent.com/fanmingming/live/main/tv";
+const UPDATE_LOGO_URL = `${MIGU_LOGO_BASE_URL}/湖南卫视.png`;
+
+const PUBLIC_ACCOUNT_ENTRIES = [
+  [`#EXTINF:-1 group-title="公众号【壹来了】" tvg-logo="${MIGU_LOGO_BASE_URL}/翡翠台.png",轮播频道-翡翠台`, "http://php.jdshipin.com:8880/TVOD/iptv.php?id=fct3"],
+  [`#EXTINF:-1 group-title="公众号【壹来了】" tvg-logo="${MIGU_LOGO_BASE_URL}/翡翠台.png",轮播频道-翡翠台`, "http://php.jdshipin.com:8880/TVOD/iptv.php?id=fct3"],
+  [`#EXTINF:-1 group-title="公众号【壹来了】" tvg-logo="${MIGU_LOGO_BASE_URL}/无线新闻台.png",轮播频道-无线新闻台`, "http://php.jdshipin.com/TVOD/iptv.php?id=tvbxw"],
+  [`#EXTINF:-1 group-title="公众号【壹来了】" tvg-logo="${MIGU_LOGO_BASE_URL}/无线新闻台.png",轮播频道-无线新闻台`, "http://php.jdshipin.com/TVOD/iptv.php?id=tvbxw"],
+  [`#EXTINF:-1 group-title="公众号【壹来了】" tvg-logo="${MIGU_LOGO_BASE_URL}/翡翠台.png",网络收集随时失效`, "https://gitee.com/vv2029/SuCai/raw/master/gonggao_2/gonggao_2.m3u8"],
+  [`#EXTINF:-1 group-title="公众号【壹来了】" tvg-logo="${MIGU_LOGO_BASE_URL}/翡翠台.png",登录点赞后更多精彩`, "https://gitee.com/vv2029/SuCai/raw/master/output.m3u8"],
 ];
 
 function extractGroup(extinf) {
@@ -101,6 +132,69 @@ function replaceName(extinf, targetName) {
     return `${extinf},${targetName}`;
   }
   return `${extinf.slice(0, commaIndex + 1)}${targetName}`;
+}
+
+function updateDateName(entries) {
+  for (const entry of entries) {
+    if (entry.group !== "🕘️更新时间") continue;
+    if (entry.name.startsWith("ONETV更新日期:")) return entry.name;
+    if (entry.name.startsWith("更新日期:")) return `ONETV更新日期: ${entry.name.replace("更新日期:", "").trim()}`;
+  }
+  return "";
+}
+
+function isFixedGroup(entry) {
+  const group = mapGroup(entry.group, entry.name);
+  return group === "🕘️更新时间" || group === "公众号【壹来了】";
+}
+
+function isPremiumChannelName(name) {
+  return /超清|4K|8K/i.test(name);
+}
+
+function channelSortName(name) {
+  return String(name).replace(/超清|高清|4K|8K/gi, "").trim();
+}
+
+function linePriority(entry) {
+  return entry.url.includes("192.168.1.20:1234/") ? 0 : entry.priority;
+}
+
+function makeUpdateEntries(updateName, entries) {
+  if (!updateName) return [];
+  const seenUrls = new Set();
+  return entries
+    .filter((entry) => entry.group === "卫视频道" && entry.name.includes("湖南卫视"))
+    .sort((left, right) => {
+      const premiumDiff = Number(!isPremiumChannelName(left.name)) - Number(!isPremiumChannelName(right.name));
+      if (premiumDiff !== 0) return premiumDiff;
+      const priorityDiff = linePriority(left) - linePriority(right);
+      if (priorityDiff !== 0) return priorityDiff;
+      return left.sequence - right.sequence;
+    })
+    .flatMap((entry) => {
+      if (seenUrls.has(entry.url)) return [];
+      seenUrls.add(entry.url);
+      return [{
+        ...entry,
+        extinf: `#EXTINF:-1 group-title="🕘️更新时间" tvg-logo="${UPDATE_LOGO_URL}",${updateName}`,
+        group: "🕘️更新时间",
+        name: updateName,
+        priority: linePriority(entry),
+      }];
+    });
+}
+
+function fixedPublicAccountEntries() {
+  return PUBLIC_ACCOUNT_ENTRIES.map(([extinf, url], index) => ({
+    extinf,
+    url,
+    group: "公众号【壹来了】",
+    name: entryName(extinf),
+    source: "fixed",
+    sequence: index,
+    priority: 0,
+  }));
 }
 
 export function parseM3u(text, source) {
@@ -189,6 +283,9 @@ function normalizeEntry(entry) {
 }
 
 function shouldKeepLocalEntry(entry) {
+  if (isFixedGroup(entry)) {
+    return false;
+  }
   const group = mapGroup(entry.group, entry.name);
   return LOCAL_GROUPS.has(group) || group.startsWith("体育");
 }
@@ -207,6 +304,7 @@ export function mergePlaylists(localText, remoteText) {
   const { entries: remoteEntries } = parseM3u(remoteText, "remote");
   const merged = [];
   const seenEntries = new Set();
+  const updateName = updateDateName(localEntries);
 
   for (const entry of localEntries) {
     if (!shouldKeepLocalEntry(entry)) {
@@ -234,13 +332,17 @@ export function mergePlaylists(localText, remoteText) {
     merged.push(normalizedEntry);
   }
 
+  merged.push(...makeUpdateEntries(updateName, merged), ...fixedPublicAccountEntries());
+
   const groupRank = new Map(GROUP_ORDER.map((group, index) => [group, index]));
   merged.sort((left, right) => {
     const groupDiff = (groupRank.get(left.group) ?? GROUP_ORDER.length) - (groupRank.get(right.group) ?? GROUP_ORDER.length);
     if (groupDiff !== 0) return groupDiff;
-    const nameDiff = left.name.localeCompare(right.name, "zh-Hans-CN", { numeric: true });
+    const premiumDiff = Number(!isPremiumChannelName(left.name)) - Number(!isPremiumChannelName(right.name));
+    if (premiumDiff !== 0) return premiumDiff;
+    const nameDiff = channelSortName(left.name).localeCompare(channelSortName(right.name), "zh-Hans-CN", { numeric: true });
     if (nameDiff !== 0) return nameDiff;
-    const priorityDiff = left.priority - right.priority;
+    const priorityDiff = linePriority(left) - linePriority(right);
     if (priorityDiff !== 0) return priorityDiff;
     return left.sequence - right.sequence;
   });
