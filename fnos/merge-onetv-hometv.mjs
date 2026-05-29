@@ -28,6 +28,7 @@ const GROUP_ORDER = [
   "公众号【壹来了】",
   "央视频道",
   "卫视频道",
+  "超清频道",
   "广东频道",
   "浙江频道",
   "江苏频道",
@@ -54,6 +55,7 @@ const LOCAL_GROUPS = new Set([
   "公众号【壹来了】",
   "央视频道",
   "卫视频道",
+  "超清频道",
   "其他",
   "体育昨天",
   "体育今天",
@@ -99,7 +101,7 @@ const REGIONAL_REMOTE_KEYWORDS = [
 
 const MIGU_LOGO_BASE_URL = "https://raw.githubusercontent.com/fanmingming/live/main/tv";
 const UPDATE_LOGO_URL = `${MIGU_LOGO_BASE_URL}/湖南卫视.png`;
-const LOGO_REWRITE_GROUPS = new Set(GROUP_ORDER.slice(2, 19));
+const LOGO_REWRITE_GROUPS = new Set(GROUP_ORDER.slice(2, 20));
 
 const PUBLIC_ACCOUNT_ENTRIES = [
   [`#EXTINF:-1 group-title="公众号【壹来了】" tvg-logo="${MIGU_LOGO_BASE_URL}/翡翠台.png",轮播频道-翡翠台`, "http://php.jdshipin.com:8880/TVOD/iptv.php?id=fct3"],
@@ -193,7 +195,7 @@ function makeUpdateEntries(updateName, entries) {
   if (!updateName) return [];
   const seenUrls = new Set();
   return entries
-    .filter((entry) => entry.group === "卫视频道" && entry.name.includes("湖南卫视"))
+    .filter((entry) => (entry.group === "卫视频道" || entry.group === "超清频道") && entry.name.includes("湖南卫视"))
     .sort((left, right) => {
       const premiumDiff = Number(!isPremiumChannelName(left.name)) - Number(!isPremiumChannelName(right.name));
       if (premiumDiff !== 0) return premiumDiff;
@@ -269,26 +271,32 @@ export function normalizeChannelName(name) {
 }
 
 export function mapGroup(group, name) {
-  if (GROUP_ALIASES.has(group)) {
-    return GROUP_ALIASES.get(group);
+  const mappedGroup = GROUP_ALIASES.get(group) ?? group;
+
+  if (REGION_GROUPS.has(mappedGroup)) {
+    return REGION_GROUPS.get(mappedGroup);
   }
 
   if (REGION_GROUPS.has(group)) {
     return REGION_GROUPS.get(group);
   }
 
-  if (group === "超清频道") {
-    return normalizeChannelName(name).startsWith("CCTV") ? "央视频道" : "卫视频道";
+  if (mappedGroup === "超清频道") {
+    return "超清频道";
   }
 
-  return group;
+  if ((mappedGroup === "央视频道" || mappedGroup === "卫视频道") && isPremiumChannelName(name)) {
+    return "超清频道";
+  }
+
+  return mappedGroup;
 }
 
 export function isRemoteEntryAllowed(entry) {
   const targetGroup = mapGroup(entry.group, entry.name);
   const url = entry.url.toLowerCase();
 
-  if (targetGroup === "央视频道" || targetGroup === "卫视频道") {
+  if (targetGroup === "央视频道" || targetGroup === "卫视频道" || targetGroup === "超清频道") {
     return CORE_REMOTE_KEYWORDS.some((keyword) => url.includes(keyword));
   }
 
