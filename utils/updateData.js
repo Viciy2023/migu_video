@@ -72,6 +72,10 @@ async function updateTV(_hours) {
   // txt
   renameFileSync(interfaceTXTPath, interfaceTXTPath.replace(".bak", ""))
   printGreen("TV更新完成！")
+  printGreen("成果文件已存放在以下路径:")
+  printGreen(`M3U接口文件: ${process.cwd()}/interface.txt`)
+  printGreen(`TXT接口文件: ${process.cwd()}/interfaceTXT.txt`)
+  printGreen(`回放文件: ${process.cwd()}/playback.xml`)
   const end = Date.now()
   printYellow(`TV更新耗时: ${(end - start) / 1000}秒`)
 }

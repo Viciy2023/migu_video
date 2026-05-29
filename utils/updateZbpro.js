@@ -55,6 +55,10 @@ async function updateZbpro(hours = 0) {
     }
   }
 
+  printGreen("成果文件已存放在以下路径:")
+  printGreen(`ZBPRO M3U接口文件: ${process.cwd()}/zbpro-interface.txt`)
+  printGreen(`ZBPRO TXT接口文件: ${process.cwd()}/zbpro-interfaceTXT.txt`)
+  printGreen(`ZBPRO回放文件: ${process.cwd()}/zbpro-playback.xml`)
   printGreen(`ZBPRO更新用时 ${(Date.now() - start) / 1000}秒`)
 }
 

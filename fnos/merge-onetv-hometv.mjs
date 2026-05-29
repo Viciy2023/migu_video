@@ -405,6 +405,19 @@ export async function uploadToSupabaseStorage(content, env = process.env, fetchI
   return objectName;
 }
 
+export function resultPathMessages(outputPath, env = process.env) {
+  const messages = [
+    "成果文件已存放在以下路径:",
+    `本地M3U: ${outputPath}`,
+  ];
+  if (env.SUPABASE_UPLOAD === "1") {
+    const bucket = env.SUPABASE_BUCKET || "iptv-sources";
+    const objectName = env.SUPABASE_OBJECT_NAME || "onetv_api_hometv.m3u";
+    messages.push(`Supabase对象: ${bucket}/${objectName}`);
+  }
+  return messages;
+}
+
 export async function runCli(env = process.env) {
   const localUrl = env.FNOS_MIGU_URL;
   const remoteUrl = resolveRemoteZbproUrl(env);
@@ -447,6 +460,10 @@ export async function runCli(env = process.env) {
   if (env.SUPABASE_UPLOAD === "1") {
     const objectName = await uploadToSupabaseStorage(merged, env);
     console.log(`Supabase upload completed: ${objectName}`);
+  }
+
+  for (const message of resultPathMessages(outputPath, env)) {
+    console.log(message);
   }
 }
 
