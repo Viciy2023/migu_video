@@ -136,16 +136,19 @@ function replaceName(extinf, targetName) {
 
 function updateDateName(entries) {
   for (const entry of entries) {
-    if (entry.group !== "🕘️更新时间") continue;
     if (entry.name.startsWith("ONETV更新日期:")) return entry.name;
     if (entry.name.startsWith("更新日期:")) return `ONETV更新日期: ${entry.name.replace("更新日期:", "").trim()}`;
   }
   return "";
 }
 
+function isUpdateDateEntry(entry) {
+  return entry.name.startsWith("ONETV更新日期:") || entry.name.startsWith("更新日期:");
+}
+
 function isFixedGroup(entry) {
   const group = mapGroup(entry.group, entry.name);
-  return group === "🕘️更新时间" || group === "公众号【壹来了】";
+  return group === "🕘️更新时间" || group === "公众号【壹来了】" || isUpdateDateEntry(entry);
 }
 
 function isPremiumChannelName(name) {
@@ -263,6 +266,10 @@ export function isRemoteEntryAllowed(entry) {
     return CORE_REMOTE_KEYWORDS.some((keyword) => url.includes(keyword));
   }
 
+  if (REGION_GROUPS.has(entry.group)) {
+    return true;
+  }
+
   if ([...REGION_GROUPS.values()].includes(targetGroup)) {
     return REGIONAL_REMOTE_KEYWORDS.some((keyword) => url.includes(keyword));
   }
@@ -291,8 +298,26 @@ function shouldKeepLocalEntry(entry) {
 }
 
 function shouldKeepRemoteEntry(entry) {
+  if (isFixedGroup(entry)) {
+    return false;
+  }
   const group = mapGroup(entry.group, entry.name);
   return REMOTE_BASE_GROUPS.has(group) || REGION_GROUPS.has(entry.group) || [...REGION_GROUPS.values()].includes(group);
+}
+
+function sortEntries(entries) {
+  const groupRank = new Map(GROUP_ORDER.map((group, index) => [group, index]));
+  return entries.sort((left, right) => {
+    const groupDiff = (groupRank.get(left.group) ?? GROUP_ORDER.length) - (groupRank.get(right.group) ?? GROUP_ORDER.length);
+    if (groupDiff !== 0) return groupDiff;
+    const premiumDiff = Number(!isPremiumChannelName(left.name)) - Number(!isPremiumChannelName(right.name));
+    if (premiumDiff !== 0) return premiumDiff;
+    const nameDiff = channelSortName(left.name).localeCompare(channelSortName(right.name), "zh-Hans-CN", { numeric: true });
+    if (nameDiff !== 0) return nameDiff;
+    const priorityDiff = linePriority(left) - linePriority(right);
+    if (priorityDiff !== 0) return priorityDiff;
+    return left.sequence - right.sequence;
+  });
 }
 
 function entryDedupKey(entry) {
@@ -332,23 +357,11 @@ export function mergePlaylists(localText, remoteText) {
     merged.push(normalizedEntry);
   }
 
-  merged.push(...makeUpdateEntries(updateName, merged), ...fixedPublicAccountEntries());
-
-  const groupRank = new Map(GROUP_ORDER.map((group, index) => [group, index]));
-  merged.sort((left, right) => {
-    const groupDiff = (groupRank.get(left.group) ?? GROUP_ORDER.length) - (groupRank.get(right.group) ?? GROUP_ORDER.length);
-    if (groupDiff !== 0) return groupDiff;
-    const premiumDiff = Number(!isPremiumChannelName(left.name)) - Number(!isPremiumChannelName(right.name));
-    if (premiumDiff !== 0) return premiumDiff;
-    const nameDiff = channelSortName(left.name).localeCompare(channelSortName(right.name), "zh-Hans-CN", { numeric: true });
-    if (nameDiff !== 0) return nameDiff;
-    const priorityDiff = linePriority(left) - linePriority(right);
-    if (priorityDiff !== 0) return priorityDiff;
-    return left.sequence - right.sequence;
-  });
+  const fixedEntries = [...makeUpdateEntries(updateName, merged), ...fixedPublicAccountEntries()];
+  sortEntries(merged);
 
   const output = [header];
-  for (const entry of merged) {
+  for (const entry of [...fixedEntries, ...merged]) {
     output.push(entry.extinf, entry.url);
   }
   return `${output.join("\n")}\n`;
