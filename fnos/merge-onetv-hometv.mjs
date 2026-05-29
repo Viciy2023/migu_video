@@ -460,13 +460,13 @@ export async function runCli(env = process.env) {
     console.log(`GitHub API upload completed: ${commitSha}`);
   }
 
+  for (const message of resultPathMessages(outputPath, env)) {
+    console.log(message);
+  }
+
   if (env.SUPABASE_UPLOAD === "1") {
     const objectName = await uploadToSupabaseStorage(merged, env);
     console.log(`Supabase upload completed: ${objectName}`);
-  }
-
-  for (const message of resultPathMessages(outputPath, env)) {
-    console.log(message);
   }
 }
 
