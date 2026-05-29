@@ -410,6 +410,9 @@ export function resultPathMessages(outputPath, env = process.env) {
     "成果文件已存放在以下路径:",
     `本地M3U: ${outputPath}`,
   ];
+  if (env.ONETV_PUBLIC_URL) {
+    messages.push(`HTTP访问地址: ${env.ONETV_PUBLIC_URL}`);
+  }
   if (env.SUPABASE_UPLOAD === "1") {
     const bucket = env.SUPABASE_BUCKET || "iptv-sources";
     const objectName = env.SUPABASE_OBJECT_NAME || "onetv_api_hometv.m3u";

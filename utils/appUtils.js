@@ -17,6 +17,11 @@ function interfaceStr(url, headers, urlUserId, urlToken) {
   const filePrefix = isZbpro ? "/zbpro-" : "/"
   let fileName = process.cwd() + `${filePrefix}interface.txt`
   switch (normalizedUrl) {
+    case "/onetv_api_hometv.m3u":
+      fileName = process.cwd() + "/onetv_api_hometv.m3u"
+      result.contentType = "audio/x-mpegurl; charset=utf-8"
+      break;
+
     case "/playback.xml":
       fileName = process.cwd() + `${filePrefix}playback.xml`
       result.contentType = "text/xml;charset=UTF-8"

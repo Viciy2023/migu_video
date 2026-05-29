@@ -8,7 +8,7 @@ import { delay } from "./utils/fetchList.js";
 import { channel, interfaceStr, normalizeCredentialPath } from "./utils/appUtils.js";
 import { runPostUpdateMerge } from "./utils/postUpdateMerge.js";
 
-const interfacePaths = new Set(["/", "/interface.txt", "/m3u", "/txt", "/playback.xml", "/zbpro", "/zbpro/interface.txt", "/zbpro/m3u", "/zbpro/txt", "/zbpro/playback.xml"])
+const interfacePaths = new Set(["/", "/interface.txt", "/m3u", "/txt", "/playback.xml", "/zbpro", "/zbpro/interface.txt", "/zbpro/m3u", "/zbpro/txt", "/zbpro/playback.xml", "/onetv_api_hometv.m3u"])
 
 // 运行时长
 var hours = 0

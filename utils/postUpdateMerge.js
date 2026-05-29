@@ -13,6 +13,7 @@ function postUpdateMergeEnv({ host: configuredHost = host, pass: configuredPass 
     FNOS_MIGU_URL: env.FNOS_MIGU_URL || joinUrl(baseUrl, "interface.txt"),
     REMOTE_ZBPRO_URL: env.REMOTE_ZBPRO_URL || joinUrl(baseUrl, "zbpro/interface.txt"),
     ONETV_OUTPUT: env.ONETV_OUTPUT || `${cwd}/onetv_api_hometv.m3u`,
+    ONETV_PUBLIC_URL: env.ONETV_PUBLIC_URL || joinUrl(baseUrl, "onetv_api_hometv.m3u"),
   }
 }
 
