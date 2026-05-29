@@ -329,7 +329,7 @@ export function mergePlaylists(localText, remoteText) {
   const { entries: remoteEntries } = parseM3u(remoteText, "remote");
   const merged = [];
   const seenEntries = new Set();
-  const updateName = updateDateName(localEntries);
+  const updateName = updateDateName([...localEntries, ...remoteEntries]);
 
   for (const entry of localEntries) {
     if (!shouldKeepLocalEntry(entry)) {
