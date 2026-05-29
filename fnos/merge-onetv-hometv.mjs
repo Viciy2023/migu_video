@@ -134,12 +134,22 @@ function replaceName(extinf, targetName) {
   return `${extinf.slice(0, commaIndex + 1)}${targetName}`;
 }
 
-function updateDateName(entries) {
-  for (const entry of entries) {
-    if (entry.name.startsWith("ONETV更新日期:")) return entry.name;
-    if (entry.name.startsWith("更新日期:")) return `ONETV更新日期: ${entry.name.replace("更新日期:", "").trim()}`;
-  }
-  return "";
+function updateDateName(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(now).reduce((result, part) => {
+    result[part.type] = part.value;
+    return result;
+  }, {});
+
+  return `ONETV更新日期: ${Number(parts.year)}-${Number(parts.month)}-${Number(parts.day)} ${parts.hour}:${parts.minute}:${parts.second}`;
 }
 
 function isUpdateDateEntry(entry) {
@@ -324,12 +334,12 @@ function entryDedupKey(entry) {
   return `${entry.name}\n${entry.url}`;
 }
 
-export function mergePlaylists(localText, remoteText) {
+export function mergePlaylists(localText, remoteText, now = new Date()) {
   const { header, entries: localEntries } = parseM3u(localText, "local");
   const { entries: remoteEntries } = parseM3u(remoteText, "remote");
   const merged = [];
   const seenEntries = new Set();
-  const updateName = updateDateName([...localEntries, ...remoteEntries]);
+  const updateName = updateDateName(now);
 
   for (const entry of localEntries) {
     if (!shouldKeepLocalEntry(entry)) {
