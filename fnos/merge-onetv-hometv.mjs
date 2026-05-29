@@ -371,8 +371,11 @@ export async function uploadToGitHubViaApi(content, env = process.env, fetchImpl
 }
 
 function requireSupabaseEnv(env) {
-  const required = ["SUPABASE_URL", "SUPABASE_ANON_KEY"];
+  const required = ["SUPABASE_URL"];
   const missing = required.filter((key) => !env[key]);
+  if (!env.SUPABASE_SERVICE_ROLE_KEY && !env.SUPABASE_ANON_KEY) {
+    missing.push("SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY");
+  }
   if (missing.length) {
     throw new Error(`Supabase upload missing environment variables: ${missing.join(", ")}`);
   }
@@ -385,12 +388,13 @@ export async function uploadToSupabaseStorage(content, env = process.env, fetchI
   const objectName = env.SUPABASE_OBJECT_NAME || "onetv_api_hometv.m3u";
   const objectPath = encodeURIComponent(objectName).replace(/%2F/g, "/");
   const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucket}/${objectPath}`;
+  const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
 
   const response = await fetchImpl(uploadUrl, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
-      apikey: env.SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${supabaseKey}`,
+      apikey: supabaseKey,
       "Content-Type": "audio/x-mpegurl; charset=utf-8",
       "x-upsert": "true",
     },
