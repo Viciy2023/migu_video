@@ -198,21 +198,26 @@ function shouldKeepRemoteEntry(entry) {
   return REMOTE_BASE_GROUPS.has(group) || REGION_GROUPS.has(entry.group) || [...REGION_GROUPS.values()].includes(group);
 }
 
+function entryDedupKey(entry) {
+  return `${entry.name}\n${entry.url}`;
+}
+
 export function mergePlaylists(localText, remoteText) {
   const { header, entries: localEntries } = parseM3u(localText, "local");
   const { entries: remoteEntries } = parseM3u(remoteText, "remote");
   const merged = [];
-  const seenUrls = new Set();
+  const seenEntries = new Set();
 
   for (const entry of localEntries) {
     if (!shouldKeepLocalEntry(entry)) {
       continue;
     }
     const normalizedEntry = normalizeEntry(entry);
-    if (seenUrls.has(normalizedEntry.url)) {
+    const dedupKey = entryDedupKey(normalizedEntry);
+    if (seenEntries.has(dedupKey)) {
       continue;
     }
-    seenUrls.add(normalizedEntry.url);
+    seenEntries.add(dedupKey);
     merged.push(normalizedEntry);
   }
 
@@ -221,10 +226,11 @@ export function mergePlaylists(localText, remoteText) {
       continue;
     }
     const normalizedEntry = normalizeEntry(entry);
-    if (seenUrls.has(normalizedEntry.url)) {
+    const dedupKey = entryDedupKey(normalizedEntry);
+    if (seenEntries.has(dedupKey)) {
       continue;
     }
-    seenUrls.add(normalizedEntry.url);
+    seenEntries.add(dedupKey);
     merged.push(normalizedEntry);
   }
 
