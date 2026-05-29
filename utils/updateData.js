@@ -1,11 +1,12 @@
 import { dataList } from "./fetchList.js"
 import { appendFile, appendFileSync, copyFileSync, renameFileSync, writeFile } from "./fileUtil.js"
 import { updatePlaybackData } from "./playback.js"
-import { mrefreshToken, host, ignoreCategory, token, userId } from "../config.js"
+import { mrefreshToken, host, ignoreCategory, pass, port, token, userId } from "../config.js"
 import refreshToken from "./refreshToken.js"
 import { printGreen, printRed, printYellow } from "./colorOut.js"
 import { getDateString } from "./time.js"
 import { fetchUrl } from "./net.js"
+import { joinUrl, printGeneratedFile, publicBaseUrl } from "./pathLogs.js"
 
 // 忽略分类列表
 const ignoreCategorySet = new Set()
@@ -72,10 +73,11 @@ async function updateTV(_hours) {
   // txt
   renameFileSync(interfaceTXTPath, interfaceTXTPath.replace(".bak", ""))
   printGreen("TV更新完成！")
+  const baseUrl = publicBaseUrl({ host, pass, port })
   printGreen("成果文件已存放在以下路径:")
-  printGreen(`M3U接口文件: ${process.cwd()}/interface.txt`)
-  printGreen(`TXT接口文件: ${process.cwd()}/interfaceTXT.txt`)
-  printGreen(`回放文件: ${process.cwd()}/playback.xml`)
+  printGeneratedFile(printGreen, "咪咕 M3U接口文件", `${process.cwd()}/interface.txt`, joinUrl(baseUrl, "interface.txt"))
+  printGeneratedFile(printGreen, "咪咕 TXT接口文件", `${process.cwd()}/interfaceTXT.txt`, joinUrl(baseUrl, "txt"))
+  printGeneratedFile(printGreen, "咪咕回放文件", `${process.cwd()}/playback.xml`, joinUrl(baseUrl, "playback.xml"))
   const end = Date.now()
   printYellow(`TV更新耗时: ${(end - start) / 1000}秒`)
 }

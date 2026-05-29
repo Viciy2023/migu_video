@@ -4,6 +4,8 @@ import { dataList } from "./fetchList.js"
 import { updatePlaybackData } from "./playback.js"
 import updateChannels from "./zbpro.js"
 import { printGreen, printMagenta, printRed } from "./colorOut.js"
+import { host, pass, port } from "../config.js"
+import { joinUrl, printGeneratedFile, publicBaseUrl } from "./pathLogs.js"
 
 async function updateZbpro(hours = 0) {
   const start = Date.now()
@@ -55,10 +57,11 @@ async function updateZbpro(hours = 0) {
     }
   }
 
+  const baseUrl = publicBaseUrl({ host, pass, port })
   printGreen("成果文件已存放在以下路径:")
-  printGreen(`ZBPRO M3U接口文件: ${process.cwd()}/zbpro-interface.txt`)
-  printGreen(`ZBPRO TXT接口文件: ${process.cwd()}/zbpro-interfaceTXT.txt`)
-  printGreen(`ZBPRO回放文件: ${process.cwd()}/zbpro-playback.xml`)
+  printGeneratedFile(printGreen, "ZBPRO M3U接口文件", `${process.cwd()}/zbpro-interface.txt`, joinUrl(baseUrl, "zbpro/interface.txt"))
+  printGeneratedFile(printGreen, "ZBPRO TXT接口文件", `${process.cwd()}/zbpro-interfaceTXT.txt`, joinUrl(baseUrl, "zbpro/txt"))
+  printGeneratedFile(printGreen, "ZBPRO回放文件", `${process.cwd()}/zbpro-playback.xml`, joinUrl(baseUrl, "zbpro/playback.xml"))
   printGreen(`ZBPRO更新用时 ${(Date.now() - start) / 1000}秒`)
 }
 

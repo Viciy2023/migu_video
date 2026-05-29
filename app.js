@@ -6,6 +6,7 @@ import updateZbpro from "./utils/updateZbpro.js";
 import { printBlue, printGreen, printMagenta, printRed } from "./utils/colorOut.js";
 import { delay } from "./utils/fetchList.js";
 import { channel, interfaceStr, normalizeCredentialPath } from "./utils/appUtils.js";
+import { runPostUpdateMerge } from "./utils/postUpdateMerge.js";
 
 const interfacePaths = new Set(["/", "/interface.txt", "/m3u", "/txt", "/playback.xml", "/zbpro", "/zbpro/interface.txt", "/zbpro/m3u", "/zbpro/txt", "/zbpro/playback.xml"])
 
@@ -122,6 +123,7 @@ server.listen(port, async () => {
     try {
       await update(hours)
       await updateZbpro(hours)
+      await runPostUpdateMerge()
     } catch (error) {
       console.log(error)
       printRed("更新失败")
@@ -134,6 +136,7 @@ server.listen(port, async () => {
     // 初始化数据
     await update(hours)
     await updateZbpro(hours)
+    await runPostUpdateMerge()
   } catch (error) {
     console.log(error)
     printRed("更新失败")
