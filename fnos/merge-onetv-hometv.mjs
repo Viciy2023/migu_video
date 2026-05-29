@@ -187,6 +187,31 @@ function channelSortName(name) {
   return String(name).replace(/超清|高清|4K|8K/gi, "").trim();
 }
 
+function cctvChannelNumber(name) {
+  const match = channelSortName(name).match(/^CCTV(\d+)/i);
+  return match ? Number(match[1]) : null;
+}
+
+function cctvResolutionRank(name) {
+  const match = String(name).match(/^CCTV(4K|8K)$/i);
+  return match ? Number(match[1].slice(0, 1)) : null;
+}
+
+function ultraClearSortRank(entry) {
+  if (entry.group !== "超清频道") {
+    return 0;
+  }
+  const cctvNumber = cctvChannelNumber(entry.name);
+  if (cctvNumber !== null && cctvNumber >= 1 && cctvNumber <= 17 && !/4K|8K/i.test(entry.name)) {
+    return cctvNumber;
+  }
+  if (!/4K|8K/i.test(entry.name)) {
+    return 1000;
+  }
+  const cctvResolution = cctvResolutionRank(entry.name);
+  return cctvResolution !== null ? 2000 + cctvResolution : 3000;
+}
+
 function linePriority(entry) {
   return entry.url.includes("192.168.1.20:1234/") ? 0 : entry.priority;
 }
@@ -345,6 +370,8 @@ function sortEntries(entries) {
   return entries.sort((left, right) => {
     const groupDiff = (groupRank.get(left.group) ?? GROUP_ORDER.length) - (groupRank.get(right.group) ?? GROUP_ORDER.length);
     if (groupDiff !== 0) return groupDiff;
+    const ultraClearRankDiff = ultraClearSortRank(left) - ultraClearSortRank(right);
+    if (ultraClearRankDiff !== 0) return ultraClearRankDiff;
     const premiumDiff = Number(!isPremiumChannelName(left.name)) - Number(!isPremiumChannelName(right.name));
     if (premiumDiff !== 0) return premiumDiff;
     const nameDiff = channelSortName(left.name).localeCompare(channelSortName(right.name), "zh-Hans-CN", { numeric: true });

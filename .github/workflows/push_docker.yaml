@@ -11,6 +11,7 @@ on:
       - config.js
       - package.json
       - fetchURLBy*.js
+      - fnos/merge-onetv-hometv.mjs
       - utils/**
       - .github/workflows/push_docker.yaml
 
