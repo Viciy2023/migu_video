@@ -99,6 +99,7 @@ const REGIONAL_REMOTE_KEYWORDS = [
 
 const MIGU_LOGO_BASE_URL = "https://raw.githubusercontent.com/fanmingming/live/main/tv";
 const UPDATE_LOGO_URL = `${MIGU_LOGO_BASE_URL}/湖南卫视.png`;
+const LOGO_REWRITE_GROUPS = new Set(GROUP_ORDER.slice(2, 19));
 
 const PUBLIC_ACCOUNT_ENTRIES = [
   [`#EXTINF:-1 group-title="公众号【壹来了】" tvg-logo="${MIGU_LOGO_BASE_URL}/翡翠台.png",轮播频道-翡翠台`, "http://php.jdshipin.com:8880/TVOD/iptv.php?id=fct3"],
@@ -132,6 +133,21 @@ function replaceName(extinf, targetName) {
     return `${extinf},${targetName}`;
   }
   return `${extinf.slice(0, commaIndex + 1)}${targetName}`;
+}
+
+function replaceLogo(extinf, logoUrl) {
+  if (extinf.includes('tvg-logo="')) {
+    return extinf.replace(/tvg-logo="[^"]*"/, `tvg-logo="${logoUrl}"`);
+  }
+  return extinf.replace("#EXTINF:-1", `#EXTINF:-1 tvg-logo="${logoUrl}"`);
+}
+
+function logoChannelName(name) {
+  return channelSortName(normalizeChannelName(name));
+}
+
+function channelLogoUrl(name) {
+  return `${MIGU_LOGO_BASE_URL}/${logoChannelName(name)}.png`;
 }
 
 function updateDateName(now = new Date()) {
@@ -290,9 +306,10 @@ export function isRemoteEntryAllowed(entry) {
 function normalizeEntry(entry) {
   const group = mapGroup(entry.group, entry.name);
   const name = normalizeChannelName(entry.name);
+  const extinf = replaceName(replaceGroup(entry.extinf, group), name);
   return {
     ...entry,
-    extinf: replaceName(replaceGroup(entry.extinf, group), name),
+    extinf: LOGO_REWRITE_GROUPS.has(group) ? replaceLogo(extinf, channelLogoUrl(name)) : extinf,
     group,
     name,
     priority: entry.source === "local" ? 0 : 1,
